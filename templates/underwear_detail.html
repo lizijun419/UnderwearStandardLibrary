@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>款式详情</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', '微软雅黑', sans-serif;
+            background: #f0f2f5;
+            padding: 30px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 35px 40px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #2563eb;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .back-link:hover { text-decoration: underline; }
+        h2 {
+            color: #0f172a;
+            border-left: 5px solid #f59e0b;
+            padding-left: 15px;
+            margin-bottom: 25px;
+        }
+        .detail-row {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            margin-bottom: 25px;
+        }
+        .detail-image {
+            flex: 0 0 420px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .detail-image img {
+            width: 100%;
+            height: auto;
+            min-height: 300px;
+            object-fit: contain;
+            display: block;
+        }
+        .detail-info {
+            flex: 1;
+            min-width: 200px;
+        }
+        .detail-info table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 15px;
+        }
+        .detail-info td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .detail-info .label {
+            color: #64748b;
+            font-weight: 500;
+            width: 100px;
+        }
+        .detail-info .value {
+            color: #0f172a;
+            font-weight: 600;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin: 20px 0 30px;
+        }
+        .btn-group button {
+            padding: 10px 28px;
+            border: none;
+            border-radius: 40px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-download {
+            background: #0f172a;
+            color: white;
+        }
+        .btn-download:hover {
+            background: #1e293b;
+            transform: scale(1.02);
+        }
+        .btn-download-ai {
+            background: #8b5cf6;
+            color: white;
+        }
+        .btn-download-ai:hover {
+            background: #7c3aed;
+            transform: scale(1.02);
+        }
+        .btn-back {
+            background: #e2e8f0;
+            color: #1e293b;
+        }
+        .btn-back:hover {
+            background: #cbd5e1;
+        }
+
+        .spec-section {
+            margin-top: 20px;
+            border-top: 2px solid #f1f5f9;
+            padding-top: 20px;
+        }
+        .spec-section h3 {
+            color: #0f172a;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        .spec-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        .spec-table th {
+            background: #f1f5f9;
+            padding: 10px 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #334155;
+        }
+        .spec-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #f1f5f9;
+            color: #1e293b;
+        }
+        .spec-table tr:hover td {
+            background: #f8fafc;
+        }
+        .loading-text {
+            text-align: center;
+            padding: 40px;
+            color: #94a3b8;
+        }
+        @media (max-width: 600px) {
+            .container { padding: 20px; }
+            .detail-row { flex-direction: column; }
+            .detail-image { flex: 1; min-height: 200px; }
+            .detail-image img { min-height: 200px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="app">
+        <a href="/" class="back-link">← 返回首页</a>
+        <h2 id="pageTitle">📋 款式详情</h2>
+        <div id="content">
+            <div class="loading-text">⏳ 加载中...</div>
+        </div>
+    </div>
+
+    <script>
+        const pathParts = window.location.pathname.split('/');
+        const imageId = pathParts[pathParts.length - 1];
+
+        async function loadDetail() {
+            const container = document.getElementById('content');
+
+            try {
+                const resp = await fetch('/api/underwear_garments');
+                const result = await resp.json();
+
+                if (result.status !== 'success') {
+                    container.innerHTML = `<div style="color:red;padding:20px;">❌ 加载失败</div>`;
+                    return;
+                }
+
+                const item = result.data.find(d => d.image_id == imageId);
+                if (!item) {
+                    container.innerHTML = `<div style="color:red;padding:20px;">❌ 未找到该款式</div>`;
+                    return;
+                }
+
+                const imgUrl = `/api/underwear_image/${item.image_id}`;
+                const category = item.category || '未分类';
+
+                // 判断是否为内裤（只有内裤才显示工艺部位说明）
+                const underwearCategories = ['丁字裤', '平角裤', '三角裤', '细带三角裤'];
+                const isUnderwear = underwearCategories.includes(category);
+
+                let specHtml = '';
+                if (isUnderwear) {
+                    specHtml = `
+                        <div class="spec-section">
+                            <h3>📏 工艺部位说明</h3>
+                            <table class="spec-table">
+                                <thead><tr><th>部位名称</th><th>测量说明</th></tr></thead>
+                                <tbody>
+                                    <tr><td>1/2 腰围</td><td>腰头左侧边沿至右侧边沿（半围）</td></tr>
+                                    <tr><td>1/2 脚口</td><td>脚口左侧边沿至右侧边沿（半围）</td></tr>
+                                    <tr><td>前中长</td><td>前中从上至下垂直长度</td></tr>
+                                    <tr><td>后中长</td><td>后中从上至下垂直长度</td></tr>
+                                    <tr><td>身侧高</td><td>腰头至脚口的侧缝高度</td></tr>
+                                    <tr><td>前裆宽</td><td>前裆部横向宽度</td></tr>
+                                    <tr><td>后裆宽</td><td>后裆部横向宽度</td></tr>
+                                    <tr><td>裆长</td><td>前裆至后裆的纵向长度</td></tr>
+                                    <tr><td>裆部最窄处宽</td><td>裆部最窄位置宽度</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+
+                let html = `
+                    <div class="detail-row">
+                        <div class="detail-image">
+                            <img src="${imgUrl}" alt="${item.image_name}" 
+                                 style="width:100%; height:auto; min-height:300px; object-fit:contain;"
+                                 onerror="this.alt='📷 图片加载失败'; this.style.minHeight='200px'; this.style.display='block';">
+                        </div>
+                        <div class="detail-info">
+                            <table>
+                                <tr><td class="label">款式名称</td><td class="value">${item.image_name}</td></tr>
+                                <tr><td class="label">款号</td><td class="value">${item.image_code}</td></tr>
+                                <tr><td class="label">分类</td><td class="value"><span style="background:#dbeafe;padding:2px 12px;border-radius:20px;color:#1d4ed8;">${category}</span></td></tr>
+                                <tr><td class="label">上传时间</td><td class="value">${item.upload_time ? item.upload_time.substring(0,10) : '未知'}</td></tr>
+                                <tr><td class="label">文件大小</td><td class="value">${item.image_size ? (item.image_size/1024).toFixed(1) + ' KB' : '未知'}</td></tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="btn-group">
+                        <button class="btn-download" onclick="downloadImage(${item.image_id}, '${item.image_name}')">
+                            📥 下载款式图
+                        </button>
+                        <button class="btn-download-ai" onclick="downloadAI(${item.image_id})">
+                            📥 下载AI文件
+                        </button>
+                        <button class="btn-back" onclick="location.href='/'">🏠 返回首页</button>
+                    </div>
+
+                    ${specHtml}
+                `;
+
+                container.innerHTML = html;
+                document.getElementById('pageTitle').textContent = `📋 ${item.image_name}`;
+
+            } catch (err) {
+                container.innerHTML = `<div style="color:red;padding:20px;">❌ 请求出错：${err.message}</div>`;
+            }
+        }
+
+        function downloadImage(imageId, imageName) {
+            const link = document.createElement('a');
+            link.href = `/api/underwear_image/${imageId}`;
+            link.download = `${imageName}.jpg`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function downloadAI(imageId) {
+            window.location.href = `/api/download_ai/${imageId}`;
+        }
+
+        window.onload = loadDetail;
+    </script>
+</body>
+</html>

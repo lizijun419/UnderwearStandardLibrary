@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>上传文胸 - 内衣标准库</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', '微软雅黑', sans-serif;
+            background: #f0f2f5;
+            padding: 30px;
+        }
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #2563eb;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .back-link:hover { text-decoration: underline; }
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 35px 40px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+            margin-bottom: 30px;
+        }
+        .card h2 {
+            color: #0f172a;
+            border-left: 5px solid #3b82f6;
+            padding-left: 15px;
+            margin-bottom: 25px;
+            font-size: 22px;
+        }
+        .card h2 .sub {
+            font-size: 14px;
+            font-weight: 400;
+            color: #94a3b8;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+        .form-group label .required { color: #ef4444; margin-left: 2px; }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 15px;
+            transition: 0.2s;
+            background: #fafafa;
+        }
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+            background: white;
+        }
+        .form-group input[type="file"] {
+            padding: 10px;
+            background: #f8fafc;
+            border: 2px dashed #cbd5e1;
+            cursor: pointer;
+        }
+        .form-group input[type="file"]:hover {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+        .form-hint {
+            font-size: 13px;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 10px;
+        }
+        .btn-submit:hover {
+            background: #2563eb;
+            transform: scale(1.01);
+        }
+        .btn-submit:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .btn-submit-green {
+            background: #22c55e;
+        }
+        .btn-submit-green:hover {
+            background: #16a34a;
+        }
+        .message {
+            padding: 14px 18px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+            font-weight: 500;
+        }
+        .message.success { display: block; background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+        .message.error { display: block; background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+        .file-preview {
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            background: #f1f5f9;
+            border-radius: 8px;
+        }
+        .file-preview img { max-height: 50px; border-radius: 6px; border: 1px solid #e2e8f0; }
+        .file-preview .file-name { font-size: 14px; color: #1e293b; word-break: break-all; }
+        .file-preview .file-size { font-size: 12px; color: #94a3b8; }
+        .hidden { display: none !important; }
+        .divider {
+            border: none;
+            border-top: 2px dashed #e2e8f0;
+            margin: 30px 0;
+        }
+        @media (max-width: 600px) {
+            .card { padding: 20px; }
+            .form-row { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-link">← 返回首页</a>
+
+        <!-- ========== 区域1：上传罩杯形状 ========== -->
+        <div class="card">
+            <h2>📐 上传罩杯形状 <span class="sub">（PNG）</span></h2>
+
+            <div id="msgShape" class="message"></div>
+
+            <form id="uploadShapeForm" enctype="multipart/form-data">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>罩杯类型 <span class="required">*</span></label>
+                        <select id="shapeCupType" name="cup_type" required>
+                            <option value="3/4罩杯">3/4罩杯</option>
+                            <option value="1/2罩杯">1/2罩杯</option>
+                            <option value="全罩杯">全罩杯</option>
+                            <option value="三角杯">三角杯</option>
+                            <option value="背心">背心</option>
+                            <option value="抹胸">抹胸</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>形状编号 <span class="required">*</span></label>
+                        <input type="text" id="shapeCode" name="cup_shape_code" placeholder="A01, B14, F01..." required>
+                        <div class="form-hint">例：A：3/4罩杯 B：1/2罩杯 C：全罩杯 D：三角杯 E：背心 F：抹胸</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>备注（选填）</label>
+                    <input type="text" id="shapeRemark" name="remark" placeholder="可填写尺寸、颜色、面料等补充信息">
+                </div>
+
+                <div class="form-group">
+                    <label>PNG文件 <span class="required">*</span></label>
+                    <input type="file" id="shapePng" name="cup_png" accept=".png" required>
+                    <div id="shapePngPreview" class="file-preview hidden">
+                        <img id="shapePreviewImg" src="" alt="预览">
+                        <span class="file-name" id="shapePngName"></span>
+                        <span class="file-size" id="shapePngSize"></span>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-submit btn-submit-green" id="submitShapeBtn">⬆️ 上传罩杯形状</button>
+            </form>
+        </div>
+
+        <hr class="divider">
+
+        <!-- ========== 区域2：上传模板组合 ========== -->
+        <div class="card">
+            <h2>📄 上传模板组合 <span class="sub">（AI文件）</span></h2>
+
+            <div id="msgTemplate" class="message"></div>
+
+            <form id="uploadTemplateForm" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label>罩杯类型 <span class="required">*</span></label>
+                    <select id="templateCupType" name="cup_type" required>
+                        <option value="3/4罩杯">3/4罩杯</option>
+                        <option value="1/2罩杯">1/2罩杯</option>
+                        <option value="全罩杯">全罩杯</option>
+                        <option value="三角杯">三角杯</option>
+                        <option value="背心">背心</option>
+                        <option value="抹胸">抹胸</option>
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>侧比类型</label>
+                        <select id="templateSideRatio" name="side_ratio_type">
+                            <option value="常规侧比">常规侧比</option>
+                            <option value="低侧比">低侧比</option>
+                            <option value="高侧比">高侧比</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>前中宽度</label>
+                        <select id="templateCenterWidth" name="center_width">
+                            <option value="有前中宽">有前中宽</option>
+                            <option value="无前中宽">无前中宽</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>备注（选填）</label>
+                    <input type="text" id="templateRemark" name="remark" placeholder="可填写尺寸、颜色、面料等补充信息">
+                </div>
+
+                <div class="form-group">
+                    <label>款式图AI <span style="color:#94a3b8;font-weight:400;">（可选，至少选一个）</span></label>
+                    <input type="file" id="templateAi" name="template_ai" accept=".ai">
+                    <div id="templateAiPreview" class="file-preview hidden">
+                        <span style="font-size:20px;">📄</span>
+                        <span class="file-name" id="templateAiName"></span>
+                        <span class="file-size" id="templateAiSize"></span>
+                    </div>
+                    <div class="form-hint">上传文胸款式图AI源文件（可选）</div>
+                </div>
+
+                <div class="form-group">
+                    <label>尺寸规格AI <span style="color:#94a3b8;font-weight:400;">（可选，至少选一个）</span></label>
+                    <input type="file" id="templateAnnotation" name="annotation_ai" accept=".ai">
+                    <div id="templateAnnPreview" class="file-preview hidden">
+                        <span style="font-size:20px;">📄</span>
+                        <span class="file-name" id="templateAnnName"></span>
+                        <span class="file-size" id="templateAnnSize"></span>
+                    </div>
+                    <div class="form-hint">上传尺寸标注AI文件（可选）</div>
+                </div>
+
+                <div style="font-size:14px;color:#64748b;margin-bottom:12px;">⚠️ 款式图AI和尺寸规格AI至少选择其中一个</div>
+
+                <button type="submit" class="btn-submit" id="submitTemplateBtn">⬆️ 上传模板组合</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function setupPreview(fileInput, previewDiv, nameId, sizeId, imgId) {
+            fileInput.addEventListener('change', function() {
+                const file = this.files[0];
+                if (file) {
+                    if (imgId) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) { document.getElementById(imgId).src = e.target.result; };
+                        reader.readAsDataURL(file);
+                    }
+                    document.getElementById(nameId).textContent = file.name;
+                    document.getElementById(sizeId).textContent = (file.size / 1024).toFixed(1) + ' KB';
+                    previewDiv.classList.remove('hidden');
+                } else {
+                    previewDiv.classList.add('hidden');
+                }
+            });
+        }
+
+        setupPreview(
+            document.getElementById('shapePng'),
+            document.getElementById('shapePngPreview'),
+            'shapePngName', 'shapePngSize', 'shapePreviewImg'
+        );
+        setupPreview(
+            document.getElementById('templateAi'),
+            document.getElementById('templateAiPreview'),
+            'templateAiName', 'templateAiSize', null
+        );
+        setupPreview(
+            document.getElementById('templateAnnotation'),
+            document.getElementById('templateAnnPreview'),
+            'templateAnnName', 'templateAnnSize', null
+        );
+
+        // ========== 表单1：上传罩杯形状 ==========
+        const shapeForm = document.getElementById('uploadShapeForm');
+        const msgShape = document.getElementById('msgShape');
+        const submitShapeBtn = document.getElementById('submitShapeBtn');
+
+        shapeForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            msgShape.className = 'message';
+            msgShape.textContent = '';
+            submitShapeBtn.disabled = true;
+            submitShapeBtn.textContent = '⏳ 上传中...';
+
+            const formData = new FormData(this);
+            try {
+                const resp = await fetch('/api/upload_bra_shape', { method: 'POST', body: formData });
+                const result = await resp.json();
+                if (result.status === 'success') {
+                    msgShape.className = 'message success';
+                    msgShape.textContent = `✅ ${result.message}`;
+                    document.getElementById('shapeCode').value = '';
+                    document.getElementById('shapeRemark').value = '';
+                    document.getElementById('shapePng').value = '';
+                    document.getElementById('shapePngPreview').classList.add('hidden');
+                } else {
+                    msgShape.className = 'message error';
+                    msgShape.textContent = `❌ ${result.error}`;
+                }
+            } catch (err) {
+                msgShape.className = 'message error';
+                msgShape.textContent = `❌ ${err.message}`;
+            } finally {
+                submitShapeBtn.disabled = false;
+                submitShapeBtn.textContent = '⬆️ 上传罩杯形状';
+            }
+        });
+
+        // ========== 表单2：上传模板组合 ==========
+        const templateForm = document.getElementById('uploadTemplateForm');
+        const msgTemplate = document.getElementById('msgTemplate');
+        const submitTemplateBtn = document.getElementById('submitTemplateBtn');
+
+        templateForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const templateAiFile = document.getElementById('templateAi').files[0];
+            const annotationAiFile = document.getElementById('templateAnnotation').files[0];
+
+            if (!templateAiFile && !annotationAiFile) {
+                msgTemplate.className = 'message error';
+                msgTemplate.textContent = '❌ 请至少上传款式图AI或尺寸规格AI中的一个';
+                return;
+            }
+
+            msgTemplate.className = 'message';
+            msgTemplate.textContent = '';
+            submitTemplateBtn.disabled = true;
+            submitTemplateBtn.textContent = '⏳ 上传中...';
+
+            const formData = new FormData(this);
+            try {
+                const resp = await fetch('/api/upload_bra_template', { method: 'POST', body: formData });
+                const result = await resp.json();
+                if (result.status === 'success') {
+                    msgTemplate.className = 'message success';
+                    msgTemplate.textContent = `✅ ${result.message}`;
+                    document.getElementById('templateRemark').value = '';
+                    document.getElementById('templateAi').value = '';
+                    document.getElementById('templateAnnotation').value = '';
+                    document.getElementById('templateAiPreview').classList.add('hidden');
+                    document.getElementById('templateAnnPreview').classList.add('hidden');
+                } else {
+                    msgTemplate.className = 'message error';
+                    msgTemplate.textContent = `❌ ${result.error}`;
+                }
+            } catch (err) {
+                msgTemplate.className = 'message error';
+                msgTemplate.textContent = `❌ ${err.message}`;
+            } finally {
+                submitTemplateBtn.disabled = false;
+                submitTemplateBtn.textContent = '⬆️ 上传模板组合';
+            }
+        });
+    </script>
+</body>
+</html>

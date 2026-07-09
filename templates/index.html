@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>内衣标准库</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', '微软雅黑', sans-serif;
+            background: #f0f2f5;
+            padding: 30px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        h1 {
+            font-size: 28px;
+            color: #1a2b3c;
+            border-left: 6px solid #3498db;
+            padding-left: 15px;
+            margin: 0;
+        }
+        .header-badge {
+            background: #2c3e50;
+            color: white;
+            padding: 6px 16px;
+            border-radius: 30px;
+            font-size: 14px;
+        }
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .btn-upload {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 30px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            color: white;
+        }
+        .btn-upload-underwear { background: #22c55e; }
+        .btn-upload-underwear:hover { background: #16a34a; transform: scale(1.02); }
+        .btn-upload-bra { background: #3b82f6; }
+        .btn-upload-bra:hover { background: #2563eb; transform: scale(1.02); }
+        .btn-upload-other { background: #8b5cf6; }
+        .btn-upload-other:hover { background: #7c3aed; transform: scale(1.02); }
+
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 0;
+            flex-wrap: wrap;
+        }
+        .nav-tabs button {
+            padding: 12px 30px;
+            border: none;
+            background: transparent;
+            border-radius: 8px 8px 0 0;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            color: #64748b;
+            border-bottom: 3px solid transparent;
+        }
+        .nav-tabs button.active {
+            color: #1e293b;
+            background: #ffffff;
+            border-bottom-color: #3498db;
+            box-shadow: 0 -2px 8px rgba(0,0,0,0.04);
+        }
+        .nav-tabs button:hover:not(.active) {
+            color: #1e293b;
+            background: #f8fafc;
+        }
+
+        .filter-bar {
+            background: white;
+            padding: 15px 24px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .filter-bar label {
+            font-weight: 600;
+            color: #475569;
+            font-size: 14px;
+        }
+        .filter-bar select {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+        }
+        .filter-bar select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+        }
+
+        .stats {
+            background: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            display: inline-block;
+            font-size: 15px;
+            color: #475569;
+        }
+        .stats span {
+            font-weight: 700;
+            color: #2563eb;
+            font-size: 18px;
+        }
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 24px;
+        }
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 16px 16px 18px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 1px solid #f1f5f9;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+            border-color: #e2e8f0;
+        }
+        .card-underwear { border-left: 5px solid #f59e0b; }
+        .card-dress { border-left: 5px solid #ec4899; }
+        .image-box {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #f8fafc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+            border: 1px solid #f1f5f9;
+            position: relative;
+        }
+        .image-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transition: transform 0.3s;
+            position: relative;
+            z-index: 1;
+        }
+        .card:hover .image-box img { transform: scale(1.02); }
+        .image-box .no-img {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #cbd5e1;
+            font-size: 14px;
+            pointer-events: none;
+        }
+        .card h3 {
+            font-size: 16px;
+            color: #0f172a;
+            margin: 4px 0 2px;
+            font-weight: 600;
+            width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .card .code {
+            font-size: 13px;
+            color: #64748b;
+            background: #f1f5f9;
+            padding: 0 10px;
+            border-radius: 12px;
+            display: inline-block;
+            margin-bottom: 6px;
+        }
+        .card .category-tag {
+            font-size: 12px;
+            padding: 2px 12px;
+            border-radius: 20px;
+            background: #dbeafe;
+            color: #1d4ed8;
+            margin-bottom: 6px;
+            display: inline-block;
+        }
+        .card .meta {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 2px;
+        }
+        .card .btn-group {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 8px;
+            width: 100%;
+        }
+        .card .btn-group button {
+            padding: 4px 10px;
+            border: none;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-detail { background: #d97706; color: white; }
+        .btn-detail:hover { background: #b45309; transform: scale(1.02); }
+        .btn-detail.dress-btn { background: #ec4899; }
+        .btn-detail.dress-btn:hover { background: #db2777; }
+        .btn-download { background: #3b82f6; color: white; }
+        .btn-download:hover { background: #2563eb; transform: scale(1.02); }
+        .btn-edit { background: #f59e0b; color: white; }
+        .btn-edit:hover { background: #d97706; transform: scale(1.02); }
+        .btn-delete { background: #ef4444; color: white; }
+        .btn-delete:hover { background: #dc2626; transform: scale(1.02); }
+
+        .empty-msg, .loading {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 60px 0;
+            color: #94a3b8;
+            font-size: 16px;
+            background: white;
+            border-radius: 16px;
+            border: 2px dashed #e2e8f0;
+        }
+        .loading::after {
+            content: " ...";
+            animation: dots 1.2s steps(4, end) infinite;
+        }
+        @keyframes dots {
+            0% { content: " ..."; }
+            25% { content: " .."; }
+            50% { content: " ."; }
+            75% { content: " ..."; }
+        }
+        @media (max-width: 600px) {
+            body { padding: 15px; }
+            .card-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+            .card { padding: 12px; }
+            .header { flex-direction: column; align-items: stretch; }
+            .header-actions { justify-content: center; }
+            .header-left { justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <h1>🧵 内衣标准库</h1>
+                <span class="header-badge">⚡ 云端版 v1.0</span>
+            </div>
+            <div class="header-actions" id="headerActions"></div>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="active" data-tab="underwear">🩲 内裤款式</button>
+            <button data-tab="bra_design">👙 文胸设计</button>
+            <button data-tab="dress">👗 其他款式</button>
+        </div>
+
+        <!-- 内裤筛选 -->
+        <div class="filter-bar" id="filterBar">
+            <label>🔍 筛选：</label>
+            <select id="categoryFilter">
+                <option value="全部">全部款式</option>
+                <option value="丁字裤">丁字裤</option>
+                <option value="平角裤">平角裤</option>
+                <option value="三角裤">三角裤</option>
+                <option value="细带三角裤">细带三角裤</option>
+            </select>
+        </div>
+
+        <!-- 其他款式筛选 -->
+        <div class="filter-bar" id="dressFilterBar" style="display:none;">
+            <label>🔍 筛选：</label>
+            <select id="dressCategoryFilter">
+                <option value="全部">全部款式</option>
+                <option value="吊裙">吊裙</option>
+                <option value="吊衣">吊衣</option>
+                <option value="睡衣">睡衣</option>
+                <option value="泳衣">泳衣</option>
+                <option value="背心">背心</option>
+                <option value="睡裤">睡裤</option>
+                <option value="半身裙">半身裙</option>
+                <option value="吊带袜">吊带袜</option>
+                <option value="连体衣">连体衣</option>
+                <option value="塑身衣">塑身衣</option>
+                <option value="其他">其他</option>
+            </select>
+        </div>
+
+        <div class="stats" id="stats">📊 加载中...</div>
+        <div class="card-grid" id="cardGrid">
+            <div class="loading">正在加载数据</div>
+        </div>
+    </div>
+
+    <script>
+        // 合法分类列表（与后端保持一致）
+        const VALID_UNDERWEAR = ['丁字裤', '平角裤', '三角裤', '细带三角裤'];
+        const VALID_OTHER = ['吊裙', '吊衣', '睡衣', '泳衣', '背心', '睡裤', '半身裙', '吊带袜', '连体衣', '塑身衣', '其他'];
+
+        let currentTab = 'underwear';
+        let allData = [];
+        const grid = document.getElementById('cardGrid');
+        const stats = document.getElementById('stats');
+        const filterSelect = document.getElementById('categoryFilter');
+        const dressFilterSelect = document.getElementById('dressCategoryFilter');
+        const headerActions = document.getElementById('headerActions');
+
+        function renderUploadButton(tab) {
+            let html = '';
+            if (tab === 'underwear') {
+                html = `<button class="btn-upload btn-upload-underwear" onclick="location.href='/upload?tab=underwear'">➕ 上传内裤</button>`;
+            } else if (tab === 'bra_design') {
+                html = `<button class="btn-upload btn-upload-bra" onclick="location.href='/upload_bra'">👙 上传文胸</button>`;
+            } else if (tab === 'dress') {
+                html = `<button class="btn-upload btn-upload-other" onclick="location.href='/upload?tab=other'">➕ 上传其他款式</button>`;
+            }
+            headerActions.innerHTML = html;
+        }
+
+        document.querySelectorAll('.nav-tabs button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.nav-tabs button').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentTab = this.dataset.tab;
+                renderUploadButton(currentTab);
+
+                if (currentTab === 'bra_design') {
+                    window.location.href = '/bra_design';
+                    return;
+                }
+
+                document.getElementById('filterBar').style.display = (currentTab === 'underwear') ? 'flex' : 'none';
+                document.getElementById('dressFilterBar').style.display = (currentTab === 'dress') ? 'flex' : 'none';
+                loadData();
+            });
+        });
+
+        filterSelect.addEventListener('change', function() { renderCards(allData, currentTab); });
+        dressFilterSelect.addEventListener('change', function() { renderCards(allData, currentTab); });
+
+        function loadData() {
+            grid.innerHTML = `<div class="loading">正在加载数据</div>`;
+            stats.textContent = '📊 加载中...';
+            fetch('/api/underwear_garments')
+                .then(r => r.json())
+                .then(result => {
+                    if (result.status === 'success') {
+                        allData = result.data || [];
+                        renderCards(allData, currentTab);
+                    } else {
+                        grid.innerHTML = `<div class="empty-msg">⚠️ 加载失败</div>`;
+                        stats.textContent = '📊 加载失败';
+                    }
+                })
+                .catch(() => {
+                    grid.innerHTML = `<div class="empty-msg">❌ 请求出错</div>`;
+                    stats.textContent = '📊 请求出错';
+                });
+        }
+
+        function renderCards(data, tab) {
+            let filteredData = [];
+
+            if (tab === 'underwear') {
+                const selected = filterSelect.value;
+                // 只保留分类在内裤列表中的款式
+                filteredData = data.filter(item => {
+                    return VALID_UNDERWEAR.includes(item.category);
+                });
+                // 再按筛选条件过滤
+                if (selected !== '全部') {
+                    filteredData = filteredData.filter(item => item.category === selected);
+                }
+                stats.innerHTML = `📊 共 <span>${filteredData.length}</span> 条 内裤款式`;
+            } else if (tab === 'dress') {
+                const selected = dressFilterSelect.value;
+                // 只保留分类在其他款式列表中的款式
+                filteredData = data.filter(item => {
+                    return VALID_OTHER.includes(item.category);
+                });
+                if (selected !== '全部') {
+                    filteredData = filteredData.filter(item => item.category === selected);
+                }
+                stats.innerHTML = `📊 共 <span>${filteredData.length}</span> 条 其他款式`;
+            }
+
+            if (filteredData.length === 0) {
+                grid.innerHTML = `<div class="empty-msg">📭 暂无数据</div>`;
+                return;
+            }
+
+            let html = '';
+            filteredData.forEach(item => {
+                const imgUrl = `/api/underwear_image/${item.image_id}`;
+                let displayName = item.image_name || '未命名';
+                if (displayName.length > 15) displayName = displayName.substring(0, 15) + '...';
+                const category = item.category || '未分类';
+                const cardClass = tab === 'dress' ? 'card-dress' : 'card-underwear';
+                const btnClass = tab === 'dress' ? 'dress-btn' : 'underwear-btn';
+
+                html += `
+                    <div class="card ${cardClass}">
+                        <div class="image-box">
+                            <span class="no-img" id="placeholder-${item.image_id}">🖼️ 加载中...</span>
+                            <img src="${imgUrl}" alt="${item.image_name}" 
+                                 onload="document.getElementById('placeholder-${item.image_id}').style.display='none';"
+                                 onerror="document.getElementById('placeholder-${item.image_id}').innerHTML='🖼️ 无预览';">
+                        </div>
+                        <h3 title="${item.image_name}">${displayName}</h3>
+                        <span class="code">${item.image_code}</span>
+                        <span class="category-tag">${category}</span>
+                        <div class="meta">📅 ${item.upload_time ? item.upload_time.substring(0,10) : '未知日期'}</div>
+                        <div class="btn-group">
+                            <button class="btn-detail ${btnClass}" onclick="location.href='/underwear_detail/${item.image_id}'">📋 查看</button>
+                            <button class="btn-download" onclick="downloadImage(${item.image_id}, '${item.image_name}')">📥</button>
+                            <button class="btn-edit" onclick="openEditModal(${item.image_id}, '${item.image_name}', '${item.image_code}', '${category}', '${item.description || ''}')">✏️</button>
+                            <button class="btn-delete" onclick="deleteGarment(${item.image_id}, '${item.image_name}')">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            });
+            grid.innerHTML = html;
+        }
+
+        function downloadImage(id, name) {
+            const link = document.createElement('a');
+            link.href = `/api/underwear_image/${id}`;
+            link.download = `${name}.jpg`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function openEditModal(id, name, code, category, desc) {
+            const newName = prompt('款式名称：', name);
+            if (newName === null) return;
+            const newCode = prompt('款号：', code);
+            if (newCode === null) return;
+            const newCategory = prompt('分类（内裤：丁字裤/平角裤/三角裤/细带三角裤，其他：吊裙/吊衣/睡衣/泳衣）：', category || '');
+            if (newCategory === null) return;
+            let oldRemark = '';
+            if (desc) {
+                const match = desc.match(/备注:\s*(.+)/);
+                if (match) oldRemark = match[1];
+            }
+            const newRemark = prompt('备注（选填）：', oldRemark);
+
+            fetch(`/api/update_garment/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    image_name: newName,
+                    image_code: newCode,
+                    category: newCategory,
+                    remark: newRemark || ''
+                })
+            })
+            .then(r => r.json())
+            .then(result => {
+                if (result.status === 'success') { alert('✅ 更新成功'); loadData(); }
+                else alert('❌ ' + result.error);
+            })
+            .catch(() => alert('❌ 请求出错'));
+        }
+
+        function deleteGarment(id, name) {
+            if (!confirm(`确定删除「${name}」吗？`)) return;
+            fetch(`/api/delete_garment/${id}`, { method: 'DELETE' })
+                .then(r => r.json())
+                .then(result => {
+                    if (result.status === 'success') { alert('✅ 已删除'); loadData(); }
+                    else alert('❌ ' + result.error);
+                })
+                .catch(() => alert('❌ 请求出错'));
+        }
+
+        window.onload = function() {
+            renderUploadButton('underwear');
+            loadData();
+        };
+    </script>
+</body>
+</html>

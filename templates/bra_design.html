@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文胸设计 - 内衣标准库</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', '微软雅黑', sans-serif;
+            background: #f0f2f5;
+            padding: 30px;
+        }
+        .container { max-width: 1300px; margin: 0 auto; }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .header-left h1 {
+            font-size: 28px;
+            color: #1a2b3c;
+            border-left: 6px solid #3b82f6;
+            padding-left: 15px;
+            margin: 0;
+        }
+        .header-badge {
+            background: #2c3e50;
+            color: white;
+            padding: 6px 16px;
+            border-radius: 30px;
+            font-size: 14px;
+        }
+        .btn-upload-bra {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 30px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-upload-bra:hover { background: #2563eb; transform: scale(1.02); }
+        .btn-back {
+            background: #e2e8f0;
+            color: #1e293b;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 30px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            text-decoration: none;
+        }
+        .btn-back:hover { background: #cbd5e1; }
+
+        .step-card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border: 1px solid #f1f5f9;
+        }
+        .step-card h3 {
+            color: #0f172a;
+            font-size: 17px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .step-card h3 .step-num {
+            background: #3b82f6;
+            color: white;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        select {
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: 1px solid #d1d5db;
+            font-size: 15px;
+            background: white;
+            cursor: pointer;
+            min-width: 200px;
+        }
+        select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+        }
+
+        .shape-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
+        .shape-item {
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 10px 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
+            background: #fafafa;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .shape-item:hover {
+            border-color: #93c5fd;
+            background: #eff6ff;
+        }
+        .shape-item.active {
+            border-color: #3b82f6;
+            background: #dbeafe;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
+        }
+        .shape-item .code {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+        .shape-item .preview {
+            width: 100%;
+            aspect-ratio: 1;
+            object-fit: contain;
+            border-radius: 8px;
+            background: white;
+            margin-bottom: 4px;
+        }
+        .shape-item .status-badge {
+            font-size: 11px;
+            color: #94a3b8;
+        }
+        .shape-item .status-badge.exists { color: #22c55e; }
+        .shape-item .remark-text {
+            font-size: 10px;
+            color: #94a3b8;
+            margin-top: 4px;
+            word-break: break-all;
+            max-height: 30px;
+            overflow: hidden;
+        }
+        .shape-item .action-buttons {
+            display: flex;
+            gap: 4px;
+            margin-top: 4px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .shape-item .action-buttons button {
+            padding: 2px 8px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            transition: 0.2s;
+        }
+        .download-btn {
+            background: #0f172a;
+            color: white;
+        }
+        .download-btn:hover { background: #1e293b; }
+        .edit-btn {
+            background: #f59e0b;
+            color: white;
+        }
+        .edit-btn:hover { background: #d97706; }
+        .delete-btn {
+            background: #ef4444;
+            color: white;
+        }
+        .delete-btn:hover { background: #dc2626; }
+
+        .combination-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+            margin-top: 12px;
+        }
+        .comb-item {
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 16px 18px;
+            background: #fafafa;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            transition: 0.2s;
+        }
+        .comb-item.has-file {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+        .comb-item.no-file { opacity: 0.7; }
+        .comb-item .comb-name {
+            font-weight: 600;
+            color: #0f172a;
+            font-size: 15px;
+        }
+        .comb-item .comb-remark {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+        .comb-item .comb-detail {
+            font-size: 13px;
+            color: #64748b;
+        }
+        .comb-item .comb-actions {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-top: 4px;
+            align-items: center;
+        }
+        .comb-item .comb-actions button {
+            padding: 4px 12px;
+            font-size: 12px;
+            border-radius: 6px;
+            border: none;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-download-ai {
+            background: #0f172a;
+            color: white;
+        }
+        .btn-download-ai:hover { background: #1e293b; }
+        .btn-download-ann {
+            background: #8b5cf6;
+            color: white;
+        }
+        .btn-download-ann:hover { background: #7c3aed; }
+        .btn-edit-comb {
+            background: #f59e0b;
+            color: white;
+        }
+        .btn-edit-comb:hover { background: #d97706; }
+        .btn-delete-comb {
+            background: #ef4444;
+            color: white;
+        }
+        .btn-delete-comb:hover { background: #dc2626; }
+        .file-status {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+        .file-status.exists { color: #22c55e; }
+        .file-status.missing { color: #ef4444; }
+        .missing-text {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .query-filters {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: end;
+        }
+        .query-filters .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .query-filters .form-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        @media (max-width: 600px) {
+            body { padding: 15px; }
+            .shape-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
+            .combination-grid { grid-template-columns: 1fr; }
+            .step-card { padding: 18px; }
+            .query-filters { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <h1>👙 文胸设计</h1>
+                <span class="header-badge">⚡ 组合生成 v2.0</span>
+            </div>
+            <div>
+                <button class="btn-upload-bra" onclick="location.href='/upload_bra'">➕ 上传文胸</button>
+                <button class="btn-back" onclick="location.href='/'">🏠 返回首页</button>
+            </div>
+        </div>
+
+        <div class="step-card">
+            <h3><span class="step-num">1</span> 查询模板组合</h3>
+            <div class="query-filters">
+                <div class="form-group">
+                    <label>罩杯类型 <span style="color:red;">*</span></label>
+                    <select id="queryCupType" style="min-width:150px;">
+                        <option value="">-- 请选择 --</option>
+                        <option value="3/4罩杯">3/4罩杯</option>
+                        <option value="1/2罩杯">1/2罩杯</option>
+                        <option value="全罩杯">全罩杯</option>
+                        <option value="三角杯">三角杯</option>
+                        <option value="背心">背心</option>
+                        <option value="抹胸">抹胸</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>侧比类型</label>
+                    <select id="querySideRatio" style="min-width:150px;">
+                        <option value="全部">全部</option>
+                        <option value="常规侧比">常规侧比</option>
+                        <option value="低侧比">低侧比</option>
+                        <option value="高侧比">高侧比</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>前中宽度</label>
+                    <select id="queryCenterWidth" style="min-width:150px;">
+                        <option value="全部">全部</option>
+                        <option value="有前中宽">有前中宽</option>
+                        <option value="无前中宽">无前中宽</option>
+                    </select>
+                </div>
+                <button class="btn-download-ai" onclick="queryTemplates()" style="padding:10px 30px;border-radius:10px;font-size:16px;">
+                    🔍 查询
+                </button>
+            </div>
+        </div>
+
+        <div class="step-card" id="stepShapes" style="display:none;">
+            <h3><span class="step-num">2</span> 罩杯形状 <span id="shapeCount" style="font-size:14px;color:#94a3b8;font-weight:400;"></span></h3>
+            <div class="shape-grid" id="shapeGrid">
+                <div style="grid-column:1/-1;color:#94a3b8;text-align:center;padding:20px;">请先选择罩杯类型</div>
+            </div>
+        </div>
+
+        <div class="step-card" id="stepResults" style="display:none;">
+            <h3><span class="step-num">3</span> 查询结果 <span id="resultCount" style="font-size:14px;color:#94a3b8;font-weight:400;"></span></h3>
+            <div id="resultContainer">
+                <div style="color:#94a3b8;text-align:center;padding:20px;">请选择条件后点击查询</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedCupType = null;
+        let selectedShapeCode = null;
+
+        async function queryTemplates() {
+            const cupType = document.getElementById('queryCupType').value;
+            const sideRatio = document.getElementById('querySideRatio').value;
+            const centerWidth = document.getElementById('queryCenterWidth').value;
+
+            if (!cupType) {
+                alert('请选择罩杯类型');
+                return;
+            }
+
+            selectedCupType = cupType;
+            loadShapes(cupType);
+
+            const container = document.getElementById('resultContainer');
+            const countEl = document.getElementById('resultCount');
+            container.innerHTML = '<div style="text-align:center;padding:20px;color:#94a3b8;">⏳ 查询中...</div>';
+            document.getElementById('stepResults').style.display = 'block';
+
+            try {
+                const resp = await fetch('/api/bra_template_query', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        cup_type: cupType,
+                        side_ratio_type: sideRatio === '全部' ? null : sideRatio,
+                        center_width: centerWidth === '全部' ? null : centerWidth
+                    })
+                });
+                const result = await resp.json();
+
+                if (result.status === 'success') {
+                    const data = result.data || [];
+                    countEl.textContent = `（共 ${data.length} 条）`;
+
+                    if (data.length === 0) {
+                        container.innerHTML = '<div style="color:#94a3b8;text-align:center;padding:20px;">📭 暂无匹配的模板组合</div>';
+                        return;
+                    }
+
+                    let html = `<div class="combination-grid">`;
+                    data.forEach(item => {
+                        const displayName = item.display_name || `${item.side_ratio_type || '默认侧比'} · ${item.center_width || '无前中宽'}`;
+                        const hasAi = item.ai_exists;
+                        const hasAnn = item.annotation_exists;
+                        const hasAny = hasAi || hasAnn;
+                        const remark = item.remark || '';
+
+                        html += `
+                            <div class="comb-item ${hasAny ? 'has-file' : 'no-file'}">
+                                <div class="comb-name">📐 ${displayName}</div>
+                                ${remark ? `<div class="comb-remark">📝 ${remark}</div>` : ''}
+                                <div class="comb-detail">模板ID: ${item.template_id}</div>
+                                <div class="file-status ${hasAi ? 'exists' : 'missing'}">
+                                    ${hasAi ? '✅ 款式图存在' : '❌ 款式图缺失'}
+                                </div>
+                                <div class="file-status ${hasAnn ? 'exists' : 'missing'}">
+                                    ${hasAnn ? '✅ 尺寸规格存在' : '❌ 尺寸规格缺失'}
+                                </div>
+                                <div class="comb-actions">
+                                    ${hasAi ? `<button class="btn-download-ai" onclick="downloadAI('${item.cup_type}','${item.side_ratio_type || ''}','${item.center_width || ''}')">📥 款式图</button>` : '<span class="missing-text">缺少文件</span>'}
+                                    ${hasAnn ? `<button class="btn-download-ann" onclick="downloadAnnotation('${item.cup_type}','${item.side_ratio_type || ''}','${item.center_width || ''}')">📏 尺寸规格</button>` : ''}
+                                    <button class="btn-edit-comb" onclick="editTemplateRemark(${item.template_id}, '${item.remark || ''}')">✏️</button>
+                                    <button class="btn-delete-comb" onclick="deleteTemplate(${item.template_id})">🗑️</button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    html += `</div>`;
+                    container.innerHTML = html;
+                } else {
+                    container.innerHTML = `<div style="color:red;padding:20px;">❌ 查询失败：${result.error}</div>`;
+                }
+            } catch (err) {
+                container.innerHTML = `<div style="color:red;padding:20px;">❌ 请求出错：${err.message}</div>`;
+            }
+        }
+
+        async function loadShapes(cupType) {
+            try {
+                const resp = await fetch(`/api/bra_cup_shapes?cup_type=${encodeURIComponent(cupType)}`);
+                const result = await resp.json();
+
+                if (result.status === 'success') {
+                    const shapes = result.data || [];
+                    const grid = document.getElementById('shapeGrid');
+                    const countEl = document.getElementById('shapeCount');
+
+                    const existsCount = shapes.filter(s => s.exists).length;
+                    countEl.textContent = `（共 ${shapes.length} 个，可用 ${existsCount} 个）`;
+
+                    if (shapes.length === 0) {
+                        grid.innerHTML = '<div style="grid-column:1/-1;color:#94a3b8;text-align:center;padding:20px;">暂无罩杯形状</div>';
+                        document.getElementById('stepShapes').style.display = 'block';
+                        return;
+                    }
+
+                    let html = '';
+                    shapes.forEach(shape => {
+                        const imgUrl = `/api/bra_cup_image/${shape.cup_shape_code}`;
+                        const remark = shape.remark || '';
+                        html += `
+                            <div class="shape-item" data-code="${shape.cup_shape_code}" onclick="selectShape('${shape.cup_shape_code}')">
+                                <img class="preview" src="${imgUrl}" alt="${shape.cup_shape_code}"
+                                     onerror="this.style.display='none'; this.parentElement.querySelector('.status-badge').textContent='⚠️ 无图';">
+                                <div class="code">${shape.cup_shape_code}</div>
+                                <div class="status-badge ${shape.exists ? 'exists' : ''}">${shape.exists ? '✅ 可用' : '❌ 缺失'}</div>
+                                ${remark ? `<div class="remark-text">📝 ${remark.length > 12 ? remark.substring(0,12)+'...' : remark}</div>` : ''}
+                                <div class="action-buttons">
+                                    ${shape.exists ? `<button class="download-btn" onclick="event.stopPropagation();downloadCupPNG('${shape.cup_shape_code}')">📥</button>` : ''}
+                                    ${shape.exists ? `<button class="edit-btn" onclick="event.stopPropagation();editShapeRemark('${shape.cup_shape_code}', '${shape.remark || ''}')">✏️</button>` : ''}
+                                    ${shape.exists ? `<button class="delete-btn" onclick="event.stopPropagation();deleteShape('${shape.cup_shape_code}')">🗑️</button>` : ''}
+                                </div>
+                            </div>
+                        `;
+                    });
+                    grid.innerHTML = html;
+                    document.getElementById('stepShapes').style.display = 'block';
+                }
+            } catch (err) {
+                console.error('加载罩杯形状失败:', err);
+            }
+        }
+
+        function selectShape(code) {
+            selectedShapeCode = code;
+            document.querySelectorAll('.shape-item').forEach(el => {
+                el.classList.toggle('active', el.dataset.code === code);
+            });
+        }
+
+        function downloadCupPNG(code) {
+            window.location.href = `/api/download_bra_cup/${code}`;
+        }
+
+        function downloadAI(cupType, sideRatio, centerWidth) {
+            fetch('/api/download_bra_ai', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    cup_type: cupType,
+                    side_ratio_type: sideRatio || null,
+                    center_width: centerWidth || null
+                })
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.blob().then(blob => {
+                        const link = document.createElement('a');
+                        link.href = URL.createObjectURL(blob);
+                        const side = sideRatio || '默认';
+                        const center = centerWidth || '无';
+                        link.download = `${cupType}-${side}-${center}.ai`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    });
+                } else {
+                    response.text().then(text => alert('下载失败: ' + text));
+                }
+            })
+            .catch(err => alert('请求出错: ' + err.message));
+        }
+
+        function downloadAnnotation(cupType, sideRatio, centerWidth) {
+            fetch('/api/download_bra_annotation', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    cup_type: cupType,
+                    side_ratio_type: sideRatio || null,
+                    center_width: centerWidth || null
+                })
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.blob().then(blob => {
+                        const link = document.createElement('a');
+                        link.href = URL.createObjectURL(blob);
+                        const side = sideRatio || '默认';
+                        const center = centerWidth || '无';
+                        link.download = `${cupType}-${side}-${center}-规格.ai`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    });
+                } else {
+                    response.text().then(text => alert('下载失败: ' + text));
+                }
+            })
+            .catch(err => alert('请求出错: ' + err.message));
+        }
+
+        // ========== 罩杯形状编辑/删除 ==========
+        function editShapeRemark(shapeCode, currentRemark) {
+            const newRemark = prompt('修改备注：', currentRemark || '');
+            if (newRemark === null) return;
+
+            fetch('/api/update_bra_shape', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cup_shape_code: shapeCode, remark: newRemark })
+            })
+            .then(r => r.json())
+            .then(result => {
+                if (result.status === 'success') {
+                    alert('✅ 备注更新成功');
+                    loadShapes(selectedCupType);
+                } else {
+                    alert('❌ ' + result.error);
+                }
+            })
+            .catch(err => alert('❌ 请求出错: ' + err.message));
+        }
+
+        function deleteShape(shapeCode) {
+            if (!confirm(`确定要删除罩杯形状 ${shapeCode} 吗？（关联的PNG文件也会被删除）`)) return;
+
+            fetch('/api/delete_bra_shape', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cup_shape_code: shapeCode })
+            })
+            .then(r => r.json())
+            .then(result => {
+                if (result.status === 'success') {
+                    alert('✅ ' + result.message);
+                    loadShapes(selectedCupType);
+                } else {
+                    alert('❌ ' + result.error);
+                }
+            })
+            .catch(err => alert('❌ 请求出错: ' + err.message));
+        }
+
+        // ========== 模板组合编辑/删除 ==========
+        function editTemplateRemark(templateId, currentRemark) {
+            const newRemark = prompt('修改备注：', currentRemark || '');
+            if (newRemark === null) return;
+
+            fetch('/api/update_bra_template', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ template_id: templateId, remark: newRemark })
+            })
+            .then(r => r.json())
+            .then(result => {
+                if (result.status === 'success') {
+                    alert('✅ 备注更新成功');
+                    queryTemplates();
+                } else {
+                    alert('❌ ' + result.error);
+                }
+            })
+            .catch(err => alert('❌ 请求出错: ' + err.message));
+        }
+
+        function deleteTemplate(templateId) {
+            if (!confirm('确定要删除该模板组合吗？（关联的AI文件也会被删除）')) return;
+
+            fetch('/api/delete_bra_template', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ template_id: templateId })
+            })
+            .then(r => r.json())
+            .then(result => {
+                if (result.status === 'success') {
+                    alert('✅ ' + result.message);
+                    queryTemplates();
+                } else {
+                    alert('❌ ' + result.error);
+                }
+            })
+            .catch(err => alert('❌ 请求出错: ' + err.message));
+        }
+
+        window.onload = function() {
+            document.getElementById('queryCupType').value = '';
+            document.getElementById('querySideRatio').value = '全部';
+            document.getElementById('queryCenterWidth').value = '全部';
+        };
+    </script>
+</body>
+</html>

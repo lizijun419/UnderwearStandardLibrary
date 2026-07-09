@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>上传款式 - 内衣标准库</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', '微软雅黑', sans-serif;
+            background: #f0f2f5;
+            padding: 30px;
+        }
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 35px 40px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #2563eb;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .back-link:hover { text-decoration: underline; }
+        h2 {
+            color: #0f172a;
+            border-left: 5px solid #22c55e;
+            padding-left: 15px;
+            margin-bottom: 25px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+        .form-group label .required { color: #ef4444; margin-left: 2px; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 15px;
+            transition: 0.2s;
+            background: #fafafa;
+            font-family: inherit;
+        }
+        .form-group textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+            background: white;
+        }
+        .form-group input[type="file"] {
+            padding: 10px;
+            background: #f8fafc;
+            border: 2px dashed #cbd5e1;
+            cursor: pointer;
+        }
+        .form-group input[type="file"]:hover {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+        .form-hint {
+            font-size: 13px;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            background: #22c55e;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 10px;
+        }
+        .btn-submit:hover {
+            background: #16a34a;
+            transform: scale(1.01);
+        }
+        .btn-submit:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .message {
+            padding: 14px 18px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+            font-weight: 500;
+        }
+        .message.success { display: block; background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+        .message.error { display: block; background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+        .message.loading { display: block; background: #e0f2fe; color: #075985; border: 1px solid #7dd3fc; }
+        .file-preview {
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            background: #f1f5f9;
+            border-radius: 8px;
+        }
+        .file-preview img { max-height: 50px; border-radius: 6px; border: 1px solid #e2e8f0; }
+        .file-preview .file-name { font-size: 14px; color: #1e293b; word-break: break-all; }
+        .file-preview .file-size { font-size: 12px; color: #94a3b8; }
+        .hidden { display: none !important; }
+        @media (max-width: 600px) {
+            .container { padding: 20px; }
+            .form-row { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-link">← 返回首页</a>
+        <h2 id="pageTitle">📤 上传款式</h2>
+
+        <div id="message" class="message"></div>
+
+        <form id="uploadForm" enctype="multipart/form-data">
+            <!-- 品类选择 -->
+            <div class="form-group" id="categoryTypeGroup">
+                <label>品类 <span class="required">*</span></label>
+                <select id="categoryType" name="category_type" required>
+                    <option value="underwear">🩲 内裤</option>
+                    <option value="other">👗 其他款式</option>
+                </select>
+            </div>
+
+            <!-- 内裤分类 -->
+            <div class="form-group" id="underwearCategoryGroup">
+                <label>分类 <span class="required">*</span></label>
+                <select id="underwearCategory" name="underwear_category">
+                    <option value="丁字裤">丁字裤</option>
+                    <option value="平角裤">平角裤</option>
+                    <option value="三角裤">三角裤</option>
+                    <option value="细带三角裤">细带三角裤</option>
+                </select>
+            </div>
+
+            <!-- 其他款式分类 -->
+            <div class="form-group hidden" id="otherCategoryGroup">
+                <label>分类 <span class="required">*</span></label>
+                <select id="otherCategory" name="other_category">
+                    <option value="吊裙">吊裙</option>
+                    <option value="吊衣">吊衣</option>
+                    <option value="睡衣">睡衣</option>
+                    <option value="泳衣">泳衣</option>
+                    <option value="背心">背心</option>
+                    <option value="睡裤">睡裤</option>
+                    <option value="半身裙">半身裙</option>
+                    <option value="吊带袜">吊带袜</option>
+                    <option value="连体衣">连体衣</option>
+                    <option value="塑身衣">塑身衣</option>
+                    <option value="其他">其他</option>
+                </select>
+            </div>
+
+            <!-- 款式名称 -->
+            <div class="form-group">
+                <label>款式名称 <span class="required">*</span></label>
+                <input type="text" id="imageName" name="image_name" placeholder="例如：内裤 TFDBXMF07" required>
+                <div class="form-hint">建议与文件名保持一致，方便识别</div>
+            </div>
+
+            <!-- 款号（手动填写，必填） -->
+            <div class="form-group">
+                <label>款号 <span class="required">*</span></label>
+                <input type="text" id="imageCode" name="image_code" placeholder="例如：U_250701_001" required>
+                <div class="form-hint">请自行填写唯一的款号，不可重复</div>
+            </div>
+
+            <!-- 备注（选填） -->
+            <div class="form-group">
+                <label>备注（选填）</label>
+                <textarea id="remark" name="remark" placeholder="可填写面料、颜色、工艺等补充信息"></textarea>
+            </div>
+
+            <!-- JPG 图片上传 -->
+            <div class="form-group">
+                <label>款式图片（JPG/PNG） <span class="required">*</span></label>
+                <input type="file" id="imageFile" name="image_file" accept=".jpg,.jpeg,.png" required>
+                <div class="form-hint">支持 .jpg .jpeg .png 格式，建议尺寸 800×800px 以上</div>
+                <div id="imagePreview" class="file-preview hidden">
+                    <img id="previewImg" src="" alt="预览">
+                    <span class="file-name" id="previewName"></span>
+                    <span class="file-size" id="previewSize"></span>
+                </div>
+            </div>
+
+            <!-- AI 文件上传（可选） -->
+            <div class="form-group">
+                <label>AI 源文件（可选）</label>
+                <input type="file" id="aiFile" name="ai_file" accept=".ai">
+                <div class="form-hint">上传同名的 .ai 文件，便于后续下载修改</div>
+                <div id="aiPreview" class="file-preview hidden">
+                    <span style="font-size:20px;">📄</span>
+                    <span class="file-name" id="aiPreviewName"></span>
+                    <span class="file-size" id="aiPreviewSize"></span>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-submit" id="submitBtn">🚀 上传</button>
+        </form>
+    </div>
+
+    <script>
+        // ========== 从URL参数获取tab ==========
+        const urlParams = new URLSearchParams(window.location.search);
+        const tab = urlParams.get('tab') || 'underwear';
+
+        // 设置标题和默认品类
+        const pageTitle = document.getElementById('pageTitle');
+        const categoryType = document.getElementById('categoryType');
+
+        if (tab === 'other') {
+            pageTitle.textContent = '📤 上传其他款式';
+            categoryType.value = 'other';
+        } else {
+            pageTitle.textContent = '📤 上传内裤';
+            categoryType.value = 'underwear';
+        }
+
+        // ========== 品类切换 ==========
+        const underwearGroup = document.getElementById('underwearCategoryGroup');
+        const otherGroup = document.getElementById('otherCategoryGroup');
+
+        categoryType.addEventListener('change', function() {
+            if (this.value === 'underwear') {
+                underwearGroup.classList.remove('hidden');
+                otherGroup.classList.add('hidden');
+                document.getElementById('underwearCategory').required = true;
+                document.getElementById('otherCategory').required = false;
+                pageTitle.textContent = '📤 上传内裤';
+            } else {
+                underwearGroup.classList.add('hidden');
+                otherGroup.classList.remove('hidden');
+                document.getElementById('underwearCategory').required = false;
+                document.getElementById('otherCategory').required = true;
+                pageTitle.textContent = '📤 上传其他款式';
+            }
+        });
+
+        // 触发初始状态
+        categoryType.dispatchEvent(new Event('change'));
+
+        // ========== 图片预览 ==========
+        const imageFile = document.getElementById('imageFile');
+        const imagePreview = document.getElementById('imagePreview');
+        const previewImg = document.getElementById('previewImg');
+        const previewName = document.getElementById('previewName');
+        const previewSize = document.getElementById('previewSize');
+
+        imageFile.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) { previewImg.src = e.target.result; };
+                reader.readAsDataURL(file);
+                previewName.textContent = file.name;
+                previewSize.textContent = (file.size / 1024).toFixed(1) + ' KB';
+                imagePreview.classList.remove('hidden');
+            } else {
+                imagePreview.classList.add('hidden');
+            }
+        });
+
+        // ========== AI文件预览 ==========
+        const aiFile = document.getElementById('aiFile');
+        const aiPreview = document.getElementById('aiPreview');
+        const aiPreviewName = document.getElementById('aiPreviewName');
+        const aiPreviewSize = document.getElementById('aiPreviewSize');
+
+        aiFile.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                aiPreviewName.textContent = file.name;
+                aiPreviewSize.textContent = (file.size / 1024).toFixed(1) + ' KB';
+                aiPreview.classList.remove('hidden');
+            } else {
+                aiPreview.classList.add('hidden');
+            }
+        });
+
+        // ========== 表单提交 ==========
+        const form = document.getElementById('uploadForm');
+        const message = document.getElementById('message');
+        const submitBtn = document.getElementById('submitBtn');
+
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            message.className = 'message';
+            message.textContent = '';
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ 上传中...';
+
+            const formData = new FormData(this);
+
+            try {
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    message.className = 'message success';
+                    message.textContent = `✅ 上传成功！款号：${result.image_code}`;
+                    document.getElementById('imageName').value = '';
+                    document.getElementById('imageCode').value = '';
+                    document.getElementById('remark').value = '';
+                    document.getElementById('imageFile').value = '';
+                    document.getElementById('aiFile').value = '';
+                    imagePreview.classList.add('hidden');
+                    aiPreview.classList.add('hidden');
+                    setTimeout(() => { window.location.href = '/'; }, 1500);
+                } else {
+                    message.className = 'message error';
+                    message.textContent = `❌ 上传失败：${result.error || '未知错误'}`;
+                }
+            } catch (err) {
+                message.className = 'message error';
+                message.textContent = `❌ 请求出错：${err.message}`;
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '🚀 上传';
+            }
+        });
+    </script>
+</body>
+</html>
