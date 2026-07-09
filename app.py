@@ -15,16 +15,20 @@ CORS(app)
 # ==================== 路径配置（兼容本地 + Render） ====================
 
 # 本地路径（你的原始路径）
+# ==================== 路径配置（兼容本地 + Render） ====================
+import os
+
+# 本地路径（你的原始路径）
 LOCAL_BRA_AI_ROOT = r"C:\Users\李子珺\Desktop\学习\220613207刘凝\220613207刘凝\答辩文件\数据库源文件\bradata\bradata\bin\Debug\模板-款式图"
 LOCAL_BRA_ANNOTATION_ROOT = r"C:\Users\李子珺\Desktop\学习\220613207刘凝\220613207刘凝\答辩文件\数据库源文件\bradata\bradata\bin\Debug\模板-尺寸规格"
 LOCAL_BRA_CUP_ROOT = r"C:\Users\李子珺\Desktop\学习\220613207刘凝\220613207刘凝\答辩文件\数据库源文件\bradata\bradata\bin\Debug\罩杯形状"
 LOCAL_AI_ROOT = r"C:\Users\李子珺\Desktop\学习\220613303_内裤款式图数据库系统设计与实现\论文归档\数据资料\企业款式图"
 
-# 云端路径（Render 挂载磁盘后使用）
-CLOUD_BRA_AI_ROOT = '/app/uploads/templates'
-CLOUD_BRA_ANNOTATION_ROOT = '/app/uploads/annotations'
-CLOUD_BRA_CUP_ROOT = '/app/uploads/cup_shapes'
-CLOUD_AI_ROOT = '/app/uploads/underwear_ai'
+# 云端路径（Render 挂载磁盘后使用）—— 改为相对路径，不依赖 /app
+CLOUD_BRA_AI_ROOT = './uploads/templates'      # 相对于当前工作目录
+CLOUD_BRA_ANNOTATION_ROOT = './uploads/annotations'
+CLOUD_BRA_CUP_ROOT = './uploads/cup_shapes'
+CLOUD_AI_ROOT = './uploads/underwear_ai'
 
 # 根据环境自动选择路径
 def get_path(local_path, cloud_path):
@@ -38,12 +42,10 @@ BRA_ANNOTATION_ROOT = get_path(LOCAL_BRA_ANNOTATION_ROOT, CLOUD_BRA_ANNOTATION_R
 BRA_CUP_ROOT = get_path(LOCAL_BRA_CUP_ROOT, CLOUD_BRA_CUP_ROOT)
 AI_ROOT = get_path(LOCAL_AI_ROOT, CLOUD_AI_ROOT)
 
-# 上传文件夹（本地用项目下的 uploads，云端用环境变量指定）
-UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', os.path.join(os.path.dirname(__file__), 'uploads'))
-ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png'}
-ALLOWED_AI_EXTENSIONS = {'ai'}
+# 上传文件夹（始终使用相对路径）
+UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'uploads')
 
-# 确保上传目录存在（本地）
+# 确保上传目录存在（不会创建 /app）
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 def allowed_file(filename, allowed_set):
