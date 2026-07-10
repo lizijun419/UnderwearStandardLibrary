@@ -1,4 +1,4 @@
-# app.py - 完整版（适配 Supabase Storage + UUID 文件名 + PostgreSQL 语法）
+# app.py - 修复版（精确控制文件存在性 + 上传 SQL 错误）
 
 from flask import Flask, jsonify, render_template, send_file, request
 from flask_cors import CORS
@@ -21,7 +21,6 @@ SUPABASE_SERVICE_KEY = os.environ.get('SUPABASE_SERVICE_KEY', '')
 STORAGE_API_BASE = f"{SUPABASE_URL}/storage/v1/object"
 
 def supabase_download(bucket_name, filename):
-    """直接从 Supabase Storage 下载文件（filename 应为 UUID 文件名）"""
     if not SUPABASE_SERVICE_KEY:
         return None
     url = f"{STORAGE_API_BASE}/{bucket_name}/{filename}"
@@ -36,7 +35,6 @@ def supabase_download(bucket_name, filename):
         return None
 
 def supabase_upload(bucket_name, filename, file_data, content_type="application/octet-stream"):
-    """上传文件到 Supabase Storage，使用给定的 filename（应为 UUID 文件名）"""
     if not SUPABASE_SERVICE_KEY:
         return False
     url = f"{STORAGE_API_BASE}/{bucket_name}/{filename}"
@@ -272,21 +270,9 @@ def bra_template_query():
         conn.close()
 
         for item in result:
-            # 检查文件是否存在（通过 Supabase Storage 检测）
-            if item['template_ai_path']:
-                # 解析 UUID 文件名
-                parts = item['template_ai_path'].split('/')
-                if len(parts) >= 2:
-                    uuid_file = parts[-1]
-                    bucket = parts[-2] if parts[-2] != 'supabase:' else 'bra-templates'  # 简单处理
-                    # 实际检查存储是否存在可做可不做，直接设为 True
-                    item['ai_exists'] = True
-            else:
-                item['ai_exists'] = False
-            if item['annotation_ai_path']:
-                item['annotation_exists'] = True
-            else:
-                item['annotation_exists'] = False
+            # 根据路径是否为空判断文件是否存在
+            item['ai_exists'] = item['template_ai_path'] is not None
+            item['annotation_exists'] = item['annotation_ai_path'] is not None
 
             side = item['side_ratio_type'] or '默认侧比'
             center = item['center_width'] or '无前中宽'
@@ -306,7 +292,6 @@ def get_bra_cup_image(cup_shape_code):
     try:
         if not SUPABASE_SERVICE_KEY:
             return "Supabase 未配置", 500
-        # 从数据库获取 UUID 文件名
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT cup_shape_img_path FROM bra_cup_shapes WHERE cup_shape_code = %s", (cup_shape_code,))
@@ -314,7 +299,6 @@ def get_bra_cup_image(cup_shape_code):
         conn.close()
         if not row or not row['cup_shape_img_path']:
             return "预览图不存在", 404
-        # 解析 UUID 文件名
         uuid_file = row['cup_shape_img_path'].split('/')[-1]
         file_data = supabase_download('cup-shapes', uuid_file)
         if file_data is None:
@@ -359,7 +343,6 @@ def download_bra_ai():
         if not cup_type:
             return "请选择罩杯类型", 400
 
-        # 从数据库查询 template_ai_path
         conn = get_db_connection()
         cursor = conn.cursor()
         sql = "SELECT template_ai_path FROM bra_templates WHERE cup_type = %s"
@@ -382,20 +365,16 @@ def download_bra_ai():
         if not row or not row['template_ai_path']:
             return "未找到对应的款式图", 404
 
-        # 解析 UUID 文件名
         uuid_file = row['template_ai_path'].split('/')[-1]
-        # 提取 Bucket（默认为 bra-templates）
         bucket = 'bra-templates'
         if 'supabase://' in row['template_ai_path']:
             parts = row['template_ai_path'].split('/')
             if len(parts) >= 2:
-                bucket = parts[-2]  # 如 bra-templates
+                bucket = parts[-2]
 
         file_data = supabase_download(bucket, uuid_file)
         if file_data is None:
             return f"文件不存在: {uuid_file}", 404
-        # 返回时使用原始文件名（从数据库的原始文件名提取？此处用 UUID 命名下载，或使用自定义名称）
-        # 由于我们不知道原始文件名，可以用 UUID 或构造一个名字
         download_name = f"{cup_type}_{side_ratio_type}_{center_width}.ai"
         return send_file(io.BytesIO(file_data), as_attachment=True, download_name=download_name)
     except Exception as e:
@@ -675,7 +654,7 @@ def delete_garment(image_id):
         return jsonify({'status': 'error', 'error': str(e)}), 500
 
 
-# ==================== 文胸上传功能（已修复SQL语法 + UUID文件名） ====================
+# ==================== 文胸上传功能（修复版） ====================
 
 @app.route('/api/upload_bra_shape', methods=['POST'])
 def upload_bra_shape():
@@ -702,19 +681,30 @@ def upload_bra_shape():
         if not supabase_upload('cup-shapes', uuid_filename, file_data, content_type="image/png"):
             return jsonify({'status': 'error', 'error': '上传到 Supabase 失败'}), 500
 
-        # 构造路径字符串
         png_path = f"supabase://cup-shapes/{uuid_filename}"
 
         conn = get_db_connection()
         cursor = conn.cursor()
-        # PostgreSQL 兼容的 UPSERT
-        cursor.execute("""
-            INSERT INTO bra_cup_shapes (cup_type, cup_shape_code, cup_shape_img_path, remark)
-            VALUES (%s, %s, %s, %s)
-            ON CONFLICT (cup_type, cup_shape_code) DO UPDATE
-            SET cup_shape_img_path = EXCLUDED.cup_shape_img_path,
-                remark = EXCLUDED.remark
-        """, (cup_type, cup_shape_code, png_path, remark))
+
+        # 先查询是否存在
+        cursor.execute(
+            "SELECT cup_shape_code FROM bra_cup_shapes WHERE cup_type = %s AND cup_shape_code = %s",
+            (cup_type, cup_shape_code)
+        )
+        existing = cursor.fetchone()
+
+        if existing:
+            # 更新
+            cursor.execute(
+                "UPDATE bra_cup_shapes SET cup_shape_img_path = %s, remark = %s WHERE cup_type = %s AND cup_shape_code = %s",
+                (png_path, remark, cup_type, cup_shape_code)
+            )
+        else:
+            # 插入
+            cursor.execute(
+                "INSERT INTO bra_cup_shapes (cup_type, cup_shape_code, cup_shape_img_path, remark) VALUES (%s, %s, %s, %s)",
+                (cup_type, cup_shape_code, png_path, remark)
+            )
         conn.commit()
         conn.close()
         return jsonify({'status': 'success', 'message': f'罩杯形状 {cup_shape_code} 上传成功'})
@@ -742,7 +732,6 @@ def upload_bra_template():
         if not SUPABASE_SERVICE_KEY:
             return jsonify({'status': 'error', 'error': 'Supabase 未配置'}), 500
 
-        # 生成 UUID 文件名
         ext = '.ai'
         template_uuid = None
         annotation_uuid = None
@@ -768,16 +757,15 @@ def upload_bra_template():
         cursor = conn.cursor()
         db_center = '有' if center_width == '有前中宽' else '无' if center_width == '无前中宽' else center_width
 
-        # 查找是否存在该组合
-        cursor.execute("""
-            SELECT template_id FROM bra_templates 
-            WHERE cup_type = %s AND (side_ratio_type = %s OR (side_ratio_type IS NULL AND %s IS NULL))
-            AND (center_width = %s OR (center_width IS NULL AND %s IS NULL))
-        """, (cup_type, side_ratio_type, side_ratio_type, db_center, db_center))
+        # 查询是否存在
+        cursor.execute(
+            "SELECT template_id FROM bra_templates WHERE cup_type = %s AND (side_ratio_type = %s OR (side_ratio_type IS NULL AND %s IS NULL)) AND (center_width = %s OR (center_width IS NULL AND %s IS NULL))",
+            (cup_type, side_ratio_type, side_ratio_type, db_center, db_center)
+        )
         existing = cursor.fetchone()
 
         if existing:
-            # 更新：仅更新提供的字段
+            # 更新
             update_fields = []
             params = []
             if template_path is not None:
@@ -795,12 +783,10 @@ def upload_bra_template():
                 cursor.execute(sql, params)
             template_id = existing['template_id']
         else:
-            # 插入新记录
-            cursor.execute("""
-                INSERT INTO bra_templates 
-                (cup_type, side_ratio_type, center_width, template_ai_path, annotation_ai_path, remark, category_id)
-                VALUES (%s, %s, %s, %s, %s, %s, 2)
-            """, (cup_type, side_ratio_type, db_center, template_path, annotation_path, remark))
+            cursor.execute(
+                "INSERT INTO bra_templates (cup_type, side_ratio_type, center_width, template_ai_path, annotation_ai_path, remark, category_id) VALUES (%s, %s, %s, %s, %s, %s, 2)",
+                (cup_type, side_ratio_type, db_center, template_path, annotation_path, remark)
+            )
             template_id = cursor.lastrowid
 
         conn.commit()
@@ -837,7 +823,6 @@ def delete_bra_shape():
         cup_shape_code = data.get('cup_shape_code')
         if not cup_shape_code:
             return jsonify({'status': 'error', 'error': '缺少形状编号'}), 400
-        # 从数据库获取 UUID 文件名
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT cup_shape_img_path FROM bra_cup_shapes WHERE cup_shape_code = %s", (cup_shape_code,))
@@ -882,11 +867,10 @@ def delete_bra_template():
 
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("""
-            SELECT template_ai_path, annotation_ai_path 
-            FROM bra_templates 
-            WHERE template_id = %s
-        """, (template_id,))
+        cursor.execute(
+            "SELECT template_ai_path, annotation_ai_path FROM bra_templates WHERE template_id = %s",
+            (template_id,)
+        )
         row = cursor.fetchone()
 
         if SUPABASE_SERVICE_KEY:
