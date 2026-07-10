@@ -1,4 +1,4 @@
-# app.py - 完整版（修复上传模板时 template_id 为 NULL 的问题）
+# app.py - 完整版（确保内裤图片接口正常）
 
 from flask import Flask, jsonify, render_template, send_file, request
 from flask_cors import CORS
@@ -477,10 +477,15 @@ def get_underwear_image(image_id):
             return "图片不存在", 404
         if not row['image_data']:
             return "图片数据为空", 404
+
+        # 确保数据是 bytes 类型
+        image_bytes = bytes(row['image_data'])
+        image_type = row['image_type'] or 'image/jpeg'
+
         from flask import make_response
         response = make_response(send_file(
-            io.BytesIO(row['image_data']),
-            mimetype=row['image_type'] or 'image/jpeg'
+            io.BytesIO(image_bytes),
+            mimetype=image_type
         ))
         response.headers['Cache-Control'] = 'public, max-age=86400'
         return response
@@ -653,7 +658,7 @@ def delete_garment(image_id):
         return jsonify({'status': 'error', 'error': str(e)}), 500
 
 
-# ==================== 文胸上传功能（完全自由组合，已修复 template_id 生成） ====================
+# ==================== 文胸上传功能（完全自由组合） ====================
 
 @app.route('/api/upload_bra_shape', methods=['POST'])
 def upload_bra_shape():
@@ -751,7 +756,6 @@ def upload_bra_template():
         cursor = conn.cursor()
         db_center = '有' if center_width == '有前中宽' else '无' if center_width == '无前中宽' else center_width
 
-        # 查询是否存在该组合
         cursor.execute(
             "SELECT template_id FROM bra_templates WHERE cup_type = %s AND (side_ratio_type = %s OR (side_ratio_type IS NULL AND %s IS NULL)) AND (center_width = %s OR (center_width IS NULL AND %s IS NULL))",
             (cup_type, side_ratio_type, side_ratio_type, db_center, db_center)
@@ -759,7 +763,6 @@ def upload_bra_template():
         existing = cursor.fetchone()
 
         if existing:
-            # 更新已有记录
             update_fields = []
             params = []
             if template_path is not None:
@@ -777,12 +780,10 @@ def upload_bra_template():
                 cursor.execute(sql, params)
             template_id = existing['template_id']
         else:
-            # 插入新记录，并自动生成 template_id
-            # 先查询当前最大 template_id
+            # 获取最大 template_id
             cursor.execute("SELECT COALESCE(MAX(template_id), 0) FROM bra_templates")
             max_id = cursor.fetchone()['coalesce']
             new_id = max_id + 1
-
             cursor.execute(
                 "INSERT INTO bra_templates (template_id, cup_type, side_ratio_type, center_width, template_ai_path, annotation_ai_path, remark, category_id) VALUES (%s, %s, %s, %s, %s, %s, %s, 2)",
                 (new_id, cup_type, side_ratio_type, db_center, template_path, annotation_path, remark)
