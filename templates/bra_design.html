@@ -417,7 +417,6 @@
                         const hasAnn = item.annotation_exists;
                         const hasAny = hasAi || hasAnn;
                         const remark = item.remark || '';
-                        // 确保 template_id 存在
                         const templateId = item.template_id || '';
 
                         html += `
@@ -607,7 +606,7 @@
             .catch(err => alert('❌ 请求出错: ' + err.message));
         }
 
-        // ========== 模板组合编辑/删除（修复版） ==========
+        // ========== 模板组合编辑/删除 ==========
         function editTemplateRemark(templateId, currentRemark) {
             if (!templateId) {
                 alert('❌ 错误：缺少模板ID，无法编辑');
@@ -634,7 +633,6 @@
         }
 
         function deleteTemplate(templateId) {
-            // 检查 templateId 是否存在
             if (!templateId || templateId === 'null' || templateId === 'undefined') {
                 alert('❌ 错误：缺少模板ID，无法删除。请刷新页面后重试。');
                 return;
