@@ -302,7 +302,6 @@
             <button data-tab="dress">👗 其他款式</button>
         </div>
 
-        <!-- 内裤筛选 -->
         <div class="filter-bar" id="filterBar">
             <label>🔍 筛选：</label>
             <select id="categoryFilter">
@@ -314,7 +313,6 @@
             </select>
         </div>
 
-        <!-- 其他款式筛选 -->
         <div class="filter-bar" id="dressFilterBar" style="display:none;">
             <label>🔍 筛选：</label>
             <select id="dressCategoryFilter">
@@ -323,13 +321,6 @@
                 <option value="吊衣">吊衣</option>
                 <option value="睡衣">睡衣</option>
                 <option value="泳衣">泳衣</option>
-                <option value="背心">背心</option>
-                <option value="睡裤">睡裤</option>
-                <option value="半身裙">半身裙</option>
-                <option value="吊带袜">吊带袜</option>
-                <option value="连体衣">连体衣</option>
-                <option value="塑身衣">塑身衣</option>
-                <option value="其他">其他</option>
             </select>
         </div>
 
@@ -340,10 +331,6 @@
     </div>
 
     <script>
-        // 合法分类列表（与后端保持一致）
-        const VALID_UNDERWEAR = ['丁字裤', '平角裤', '三角裤', '细带三角裤'];
-        const VALID_OTHER = ['吊裙', '吊衣', '睡衣', '泳衣', '背心', '睡裤', '半身裙', '吊带袜', '连体衣', '塑身衣', '其他'];
-
         let currentTab = 'underwear';
         let allData = [];
         const grid = document.getElementById('cardGrid');
@@ -407,27 +394,23 @@
 
         function renderCards(data, tab) {
             let filteredData = [];
-
             if (tab === 'underwear') {
                 const selected = filterSelect.value;
-                // 只保留分类在内裤列表中的款式
                 filteredData = data.filter(item => {
-                    return VALID_UNDERWEAR.includes(item.category);
+                    // 排除其他款式
+                    if (['吊带裙','吊衣','睡衣','泳衣','吊裙'].some(k => item.image_name && item.image_name.includes(k))) return false;
+                    if (selected === '全部') return true;
+                    return item.category === selected;
                 });
-                // 再按筛选条件过滤
-                if (selected !== '全部') {
-                    filteredData = filteredData.filter(item => item.category === selected);
-                }
                 stats.innerHTML = `📊 共 <span>${filteredData.length}</span> 条 内裤款式`;
             } else if (tab === 'dress') {
                 const selected = dressFilterSelect.value;
-                // 只保留分类在其他款式列表中的款式
                 filteredData = data.filter(item => {
-                    return VALID_OTHER.includes(item.category);
+                    const isOther = ['吊带裙','吊衣','睡衣','泳衣','吊裙'].some(k => item.image_name && item.image_name.includes(k));
+                    if (!isOther) return false;
+                    if (selected === '全部') return true;
+                    return item.category === selected;
                 });
-                if (selected !== '全部') {
-                    filteredData = filteredData.filter(item => item.category === selected);
-                }
                 stats.innerHTML = `📊 共 <span>${filteredData.length}</span> 条 其他款式`;
             }
 
@@ -455,7 +438,7 @@
                         </div>
                         <h3 title="${item.image_name}">${displayName}</h3>
                         <span class="code">${item.image_code}</span>
-                        <span class="category-tag">${category}</span>
+                        ${tab !== 'dress' ? `<span class="category-tag">${category}</span>` : ''}
                         <div class="meta">📅 ${item.upload_time ? item.upload_time.substring(0,10) : '未知日期'}</div>
                         <div class="btn-group">
                             <button class="btn-detail ${btnClass}" onclick="location.href='/underwear_detail/${item.image_id}'">📋 查看</button>
@@ -483,7 +466,7 @@
             if (newName === null) return;
             const newCode = prompt('款号：', code);
             if (newCode === null) return;
-            const newCategory = prompt('分类（内裤：丁字裤/平角裤/三角裤/细带三角裤，其他：吊裙/吊衣/睡衣/泳衣）：', category || '');
+            const newCategory = prompt('分类（丁字裤/平角裤/三角裤/细带三角裤/吊裙/吊衣/睡衣/泳衣）：', category || '');
             if (newCategory === null) return;
             let oldRemark = '';
             if (desc) {
