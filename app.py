@@ -1,4 +1,4 @@
-# app.py - 修复版（精确控制文件存在性 + 上传 SQL 错误）
+# app.py - 完整版（所有组合完全自由，无任何限制）
 
 from flask import Flask, jsonify, render_template, send_file, request
 from flask_cors import CORS
@@ -134,7 +134,7 @@ def parse_category_from_description(description):
     return None
 
 
-# ==================== 文胸映射 ====================
+# ==================== 文胸映射（仅用于文件名构建，无组合限制） ====================
 CUP_FILE_MAP = {
     '3/4罩杯': '34罩杯',
     '1/2罩杯': '12罩杯',
@@ -270,7 +270,6 @@ def bra_template_query():
         conn.close()
 
         for item in result:
-            # 根据路径是否为空判断文件是否存在
             item['ai_exists'] = item['template_ai_path'] is not None
             item['annotation_exists'] = item['annotation_ai_path'] is not None
 
@@ -654,7 +653,7 @@ def delete_garment(image_id):
         return jsonify({'status': 'error', 'error': str(e)}), 500
 
 
-# ==================== 文胸上传功能（修复版） ====================
+# ==================== 文胸上传功能（完全自由组合，无任何限制） ====================
 
 @app.route('/api/upload_bra_shape', methods=['POST'])
 def upload_bra_shape():
@@ -674,7 +673,6 @@ def upload_bra_shape():
         if cup_png.filename == '':
             return jsonify({'status': 'error', 'error': '请选择PNG文件'}), 400
 
-        # 生成 UUID 文件名
         ext = '.png'
         uuid_filename = f"{uuid.uuid4().hex}{ext}"
         file_data = cup_png.read()
@@ -685,8 +683,6 @@ def upload_bra_shape():
 
         conn = get_db_connection()
         cursor = conn.cursor()
-
-        # 先查询是否存在
         cursor.execute(
             "SELECT cup_shape_code FROM bra_cup_shapes WHERE cup_type = %s AND cup_shape_code = %s",
             (cup_type, cup_shape_code)
@@ -694,13 +690,11 @@ def upload_bra_shape():
         existing = cursor.fetchone()
 
         if existing:
-            # 更新
             cursor.execute(
                 "UPDATE bra_cup_shapes SET cup_shape_img_path = %s, remark = %s WHERE cup_type = %s AND cup_shape_code = %s",
                 (png_path, remark, cup_type, cup_shape_code)
             )
         else:
-            # 插入
             cursor.execute(
                 "INSERT INTO bra_cup_shapes (cup_type, cup_shape_code, cup_shape_img_path, remark) VALUES (%s, %s, %s, %s)",
                 (cup_type, cup_shape_code, png_path, remark)
@@ -757,7 +751,7 @@ def upload_bra_template():
         cursor = conn.cursor()
         db_center = '有' if center_width == '有前中宽' else '无' if center_width == '无前中宽' else center_width
 
-        # 查询是否存在
+        # 查询是否存在该组合（完全自由，不限制任何组合）
         cursor.execute(
             "SELECT template_id FROM bra_templates WHERE cup_type = %s AND (side_ratio_type = %s OR (side_ratio_type IS NULL AND %s IS NULL)) AND (center_width = %s OR (center_width IS NULL AND %s IS NULL))",
             (cup_type, side_ratio_type, side_ratio_type, db_center, db_center)
@@ -765,7 +759,6 @@ def upload_bra_template():
         existing = cursor.fetchone()
 
         if existing:
-            # 更新
             update_fields = []
             params = []
             if template_path is not None:
