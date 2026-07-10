@@ -417,12 +417,14 @@
                         const hasAnn = item.annotation_exists;
                         const hasAny = hasAi || hasAnn;
                         const remark = item.remark || '';
+                        // 确保 template_id 存在
+                        const templateId = item.template_id || '';
 
                         html += `
                             <div class="comb-item ${hasAny ? 'has-file' : 'no-file'}">
                                 <div class="comb-name">📐 ${displayName}</div>
                                 ${remark ? `<div class="comb-remark">📝 ${remark}</div>` : ''}
-                                <div class="comb-detail">模板ID: ${item.template_id}</div>
+                                <div class="comb-detail">模板ID: ${templateId}</div>
                                 <div class="file-status ${hasAi ? 'exists' : 'missing'}">
                                     ${hasAi ? '✅ 款式图存在' : '❌ 款式图缺失'}
                                 </div>
@@ -432,8 +434,8 @@
                                 <div class="comb-actions">
                                     ${hasAi ? `<button class="btn-download-ai" onclick="downloadAI('${item.cup_type}','${item.side_ratio_type || ''}','${item.center_width || ''}')">📥 款式图</button>` : '<span class="missing-text">缺少文件</span>'}
                                     ${hasAnn ? `<button class="btn-download-ann" onclick="downloadAnnotation('${item.cup_type}','${item.side_ratio_type || ''}','${item.center_width || ''}')">📏 尺寸规格</button>` : ''}
-                                    <button class="btn-edit-comb" onclick="editTemplateRemark(${item.template_id}, '${item.remark || ''}')">✏️</button>
-                                    <button class="btn-delete-comb" onclick="deleteTemplate(${item.template_id})">🗑️</button>
+                                    <button class="btn-edit-comb" onclick="editTemplateRemark('${templateId}', '${remark || ''}')">✏️</button>
+                                    <button class="btn-delete-comb" onclick="deleteTemplate('${templateId}')">🗑️</button>
                                 </div>
                             </div>
                         `;
@@ -605,8 +607,12 @@
             .catch(err => alert('❌ 请求出错: ' + err.message));
         }
 
-        // ========== 模板组合编辑/删除 ==========
+        // ========== 模板组合编辑/删除（修复版） ==========
         function editTemplateRemark(templateId, currentRemark) {
+            if (!templateId) {
+                alert('❌ 错误：缺少模板ID，无法编辑');
+                return;
+            }
             const newRemark = prompt('修改备注：', currentRemark || '');
             if (newRemark === null) return;
 
@@ -628,6 +634,11 @@
         }
 
         function deleteTemplate(templateId) {
+            // 检查 templateId 是否存在
+            if (!templateId || templateId === 'null' || templateId === 'undefined') {
+                alert('❌ 错误：缺少模板ID，无法删除。请刷新页面后重试。');
+                return;
+            }
             if (!confirm('确定要删除该模板组合吗？（关联的AI文件也会被删除）')) return;
 
             fetch('/api/delete_bra_template', {
