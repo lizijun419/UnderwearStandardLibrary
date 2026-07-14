@@ -573,9 +573,9 @@ def upload_file():
 
         cursor.execute("""
             INSERT INTO underwear_garments 
-            (image_code, image_name, image_data, image_type, image_size, description, upload_user_id, upload_time)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-        """, (image_code, image_name, image_data, image_type, image_size, description, 1, datetime.now()))
+            (image_code, image_name, image_data, image_type, image_size, description, upload_user_id)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, (image_code, image_name, image_data, image_type, image_size, description, 1))
         conn.commit()
         image_id = cursor.lastrowid
         conn.close()
