@@ -11,6 +11,12 @@ import uuid
 from datetime import datetime
 from werkzeug.utils import secure_filename
 
+# ==================== 允许上传的文件类型 ====================
+ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png'}
+ALLOWED_AI_EXTENSIONS = {'ai'}
+
+def allowed_file(filename, allowed_set):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_set
 app = Flask(__name__)
 CORS(app)
 
