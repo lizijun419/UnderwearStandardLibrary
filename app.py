@@ -1,4 +1,4 @@
-# app.py - 完整版（所有路由均已实现）
+# app.py - 完整修复版（支持图片上传、显示、删除、详情页）
 from flask import Flask, jsonify, render_template, send_file, request
 from flask_cors import CORS
 from db_config import get_db_connection
@@ -571,12 +571,12 @@ def upload_file():
         if remark:
             description += f" | 备注: {remark}"
 
-        # 插入数据（不包含 image_id，让数据库自动生成）
-cursor.execute("""
-    INSERT INTO underwear_garments 
-    (image_code, image_name, image_data, image_type, image_size, description, upload_user_id, upload_time)
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-""", (image_code, image_name, image_data, image_type, image_size, description, 1, datetime.now()))
+        # 不包含 image_id，让数据库自增；显式传入 upload_time
+        cursor.execute("""
+            INSERT INTO underwear_garments 
+            (image_code, image_name, image_data, image_type, image_size, description, upload_user_id, upload_time)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """, (image_code, image_name, image_data, image_type, image_size, description, 1, datetime.now()))
         conn.commit()
         image_id = cursor.lastrowid
         conn.close()
