@@ -1,6 +1,4 @@
-# app.py - 完整修复版（含所有路由、定义、上传和图片返回）
-# 请直接替换
-
+# app.py - 完整版（所有路由均已实现）
 from flask import Flask, jsonify, render_template, send_file, request
 from flask_cors import CORS
 from db_config import get_db_connection
@@ -21,7 +19,6 @@ SUPABASE_SERVICE_KEY = os.environ.get('SUPABASE_SERVICE_KEY', '')
 
 STORAGE_API_BASE = f"{SUPABASE_URL}/storage/v1/object"
 
-# ==================== 允许上传的文件类型 ====================
 ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png'}
 ALLOWED_AI_EXTENSIONS = {'ai'}
 
@@ -72,7 +69,7 @@ def supabase_delete(bucket_name, filename):
     return response.status_code == 200
 
 
-# ==================== 路径配置（兼容本地 + Render） ====================
+# ==================== 路径配置 ====================
 LOCAL_BRA_AI_ROOT = r"C:\Users\李子珺\Desktop\学习\220613207刘凝\220613207刘凝\答辩文件\数据库源文件\bradata\bradata\bin\Debug\模板-款式图"
 LOCAL_BRA_ANNOTATION_ROOT = r"C:\Users\李子珺\Desktop\学习\220613207刘凝\220613207刘凝\答辩文件\数据库源文件\bradata\bradata\bin\Debug\模板-尺寸规格"
 LOCAL_BRA_CUP_ROOT = r"C:\Users\李子珺\Desktop\学习\220613207刘凝\220613207刘凝\答辩文件\数据库源文件\bradata\bradata\bin\Debug\罩杯形状"
@@ -482,7 +479,6 @@ def get_underwear_image(image_id):
         if not row['image_data']:
             return "图片数据为空", 404
 
-        # 确保数据是 bytes 类型
         image_bytes = bytes(row['image_data'])
         image_type = row['image_type'] or 'image/jpeg'
 
@@ -551,12 +547,10 @@ def upload_file():
         if not allowed_file(image_file.filename, ALLOWED_EXTENSIONS):
             return jsonify({'status': 'error', 'error': '图片格式不支持，请上传 JPG/PNG 格式'}), 400
 
-        # 读取二进制数据
         image_data = image_file.read()
         image_type = image_file.mimetype
         image_size = len(image_data)
 
-        # AI 文件处理
         ai_filename = None
         if 'ai_file' in request.files:
             ai_file = request.files['ai_file']
@@ -568,7 +562,6 @@ def upload_file():
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # 检查款号是否重复
         cursor.execute("SELECT COUNT(*) as cnt FROM underwear_garments WHERE image_code = %s", (image_code,))
         if cursor.fetchone()['cnt'] > 0:
             conn.close()
@@ -578,7 +571,6 @@ def upload_file():
         if remark:
             description += f" | 备注: {remark}"
 
-        # 插入数据，upload_time 自动设为当前时间
         cursor.execute("""
             INSERT INTO underwear_garments 
             (image_code, image_name, image_data, image_type, image_size, description, upload_user_id, upload_time)
