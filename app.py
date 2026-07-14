@@ -1,4 +1,5 @@
-# app.py - 完整版（确保内裤图片接口正常）
+# app.py - 完整修复版（含所有路由、定义、上传和图片返回）
+# 请直接替换
 
 from flask import Flask, jsonify, render_template, send_file, request
 from flask_cors import CORS
@@ -11,12 +12,6 @@ import uuid
 from datetime import datetime
 from werkzeug.utils import secure_filename
 
-# ==================== 允许上传的文件类型 ====================
-ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png'}
-ALLOWED_AI_EXTENSIONS = {'ai'}
-
-def allowed_file(filename, allowed_set):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_set
 app = Flask(__name__)
 CORS(app)
 
@@ -25,6 +20,13 @@ SUPABASE_URL = os.environ.get('SUPABASE_URL', 'https://udebgifoxquvxqhpgkry.supa
 SUPABASE_SERVICE_KEY = os.environ.get('SUPABASE_SERVICE_KEY', '')
 
 STORAGE_API_BASE = f"{SUPABASE_URL}/storage/v1/object"
+
+# ==================== 允许上传的文件类型 ====================
+ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png'}
+ALLOWED_AI_EXTENSIONS = {'ai'}
+
+def allowed_file(filename, allowed_set):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_set
 
 def supabase_download(bucket_name, filename):
     if not SUPABASE_SERVICE_KEY:
@@ -95,10 +97,6 @@ UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'uploads')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
-def allowed_file(filename, allowed_set):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_set
-
-
 # ==================== 分类映射 ====================
 UNDERWEAR_CATEGORY_MAP = {
     '内裤 838HQ': '丁字裤',
@@ -140,7 +138,7 @@ def parse_category_from_description(description):
     return None
 
 
-# ==================== 文胸映射（仅用于文件名构建，无组合限制） ====================
+# ==================== 文胸映射 ====================
 CUP_FILE_MAP = {
     '3/4罩杯': '34罩杯',
     '1/2罩杯': '12罩杯',
@@ -553,10 +551,12 @@ def upload_file():
         if not allowed_file(image_file.filename, ALLOWED_EXTENSIONS):
             return jsonify({'status': 'error', 'error': '图片格式不支持，请上传 JPG/PNG 格式'}), 400
 
+        # 读取二进制数据
         image_data = image_file.read()
         image_type = image_file.mimetype
         image_size = len(image_data)
 
+        # AI 文件处理
         ai_filename = None
         if 'ai_file' in request.files:
             ai_file = request.files['ai_file']
@@ -567,6 +567,8 @@ def upload_file():
 
         conn = get_db_connection()
         cursor = conn.cursor()
+
+        # 检查款号是否重复
         cursor.execute("SELECT COUNT(*) as cnt FROM underwear_garments WHERE image_code = %s", (image_code,))
         if cursor.fetchone()['cnt'] > 0:
             conn.close()
@@ -576,11 +578,12 @@ def upload_file():
         if remark:
             description += f" | 备注: {remark}"
 
+        # 插入数据，upload_time 自动设为当前时间
         cursor.execute("""
             INSERT INTO underwear_garments 
-            (image_code, image_name, image_data, image_type, image_size, description, upload_user_id)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-        """, (image_code, image_name, image_data, image_type, image_size, description, 1))
+            (image_code, image_name, image_data, image_type, image_size, description, upload_user_id, upload_time)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """, (image_code, image_name, image_data, image_type, image_size, description, 1, datetime.now()))
         conn.commit()
         image_id = cursor.lastrowid
         conn.close()
@@ -664,7 +667,7 @@ def delete_garment(image_id):
         return jsonify({'status': 'error', 'error': str(e)}), 500
 
 
-# ==================== 文胸上传功能（完全自由组合） ====================
+# ==================== 文胸上传功能 ====================
 
 @app.route('/api/upload_bra_shape', methods=['POST'])
 def upload_bra_shape():
@@ -786,7 +789,6 @@ def upload_bra_template():
                 cursor.execute(sql, params)
             template_id = existing['template_id']
         else:
-            # 获取最大 template_id
             cursor.execute("SELECT COALESCE(MAX(template_id), 0) FROM bra_templates")
             max_id = cursor.fetchone()['coalesce']
             new_id = max_id + 1
