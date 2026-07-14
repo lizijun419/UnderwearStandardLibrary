@@ -571,11 +571,12 @@ def upload_file():
         if remark:
             description += f" | 备注: {remark}"
 
-        cursor.execute("""
-            INSERT INTO underwear_garments 
-            (image_code, image_name, image_data, image_type, image_size, description, upload_user_id)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-        """, (image_code, image_name, image_data, image_type, image_size, description, 1))
+        # 插入数据（不包含 image_id，让数据库自动生成）
+cursor.execute("""
+    INSERT INTO underwear_garments 
+    (image_code, image_name, image_data, image_type, image_size, description, upload_user_id, upload_time)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+""", (image_code, image_name, image_data, image_type, image_size, description, 1, datetime.now()))
         conn.commit()
         image_id = cursor.lastrowid
         conn.close()
